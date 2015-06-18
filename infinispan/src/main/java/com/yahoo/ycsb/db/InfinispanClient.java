@@ -53,8 +53,7 @@ public class InfinispanClient extends DB {
             if (zhost == null) {
                 infinispanManager = (BasicCacheContainer) new RemoteCacheManager(host+":11222");
             }else{
-                infinispanManager = new EnsembleCacheManager(Arrays.asList(host.split(",")),zhost,
-                        "2181",Integer.valueOf(replicationFactor));
+                infinispanManager = new EnsembleCacheManager(Arrays.asList(host.split(",")));
             }
             cache = infinispanManager.getCache();
         } catch (Exception e) {
