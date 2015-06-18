@@ -4,9 +4,8 @@ import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.StringByteIterator;
-import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.ensemble.EnsembleCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,20 +40,13 @@ public class InfinispanClient extends DB {
     public void init() throws DBException {
 
         String host = getProperties().getProperty("host");
-        String zhost = getProperties().getProperty("zhost");
-        System.out.println("HERE"+getProperties().toString());
-        String replicationFactor = getProperties().getProperty("replicationFactor");
         _debug = Boolean.parseBoolean(getProperties().getProperty("debug", "false"));
 
         if (host == null)
             throw new RuntimeException("Required property \"host\" missing for InfinispanClient");
 
         try {
-            if (zhost == null) {
-                infinispanManager = (BasicCacheContainer) new RemoteCacheManager(host+":11222");
-            }else{
-                infinispanManager = new EnsembleCacheManager(Arrays.asList(host.split(",")));
-            }
+           infinispanManager = new EnsembleCacheManager(Arrays.asList(host.split(",")));
             cache = infinispanManager.getCache();
         } catch (Exception e) {
             e.printStackTrace();
