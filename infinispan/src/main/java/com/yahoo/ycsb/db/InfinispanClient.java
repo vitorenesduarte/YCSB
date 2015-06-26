@@ -12,6 +12,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is a client implementation for Infinispan 6.x.
@@ -30,6 +31,7 @@ public class InfinispanClient extends DB {
 
    private boolean _debug = false;
 
+   private static AtomicInteger clientCounter = new AtomicInteger();
    private static final Log logger = LogFactory.getLog(InfinispanClient.class);
    private static BasicCacheContainer infinispanManager;
    private static BasicCache<String, Map<String, String>> cache;
@@ -37,44 +39,61 @@ public class InfinispanClient extends DB {
    public InfinispanClient() {
    }
 
-   public synchronized void init() throws DBException {
+   @Override
+   public void init() throws DBException {
       
       synchronized (InfinispanClient.class) {
 
-         if (cache!=null)
-            return;
-         
-         String host = getProperties().getProperty("host");
-         _debug = Boolean.parseBoolean(getProperties().getProperty("debug", "false"));
+         if (clientCounter.getAndIncrement()==0) {
 
-         if (host == null)
-            throw new RuntimeException("Required property \"host\" missing for InfinispanClient");
+            String host = getProperties().getProperty("host");
+            _debug = Boolean.parseBoolean(getProperties().getProperty("debug", "false"));
 
-         try {
-            Properties properties = new Properties();
-            properties.setProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "100");
+            if (host == null)
+               throw new RuntimeException("Required property \"host\" missing for InfinispanClient");
 
-            infinispanManager = new EnsembleCacheManager(
-                  host,
-                  null,
-                  properties,
-                  new LocalIndexBuilder());
-            cache = infinispanManager.getCache();
+            try {
 
-         } catch (Exception e) {
-            e.printStackTrace();
+               Properties properties = new Properties();
+               properties.setProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "100");
+
+               infinispanManager = new EnsembleCacheManager(
+                     host,
+                     null,
+                     properties,
+                     new LocalIndexBuilder());
+               infinispanManager.start();
+
+               cache = infinispanManager.getCache();
+               cache.start();
+
+               if (_debug)
+                  System.out.println("Manager created");
+
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+
          }
 
       }
 
+      if (_debug) System.out.println("Client linked to "+Thread.currentThread().getName()+" created");
 
    }
 
+   @Override
    public void cleanup() {
-      infinispanManager.stop();
-      infinispanManager = null;
+      synchronized (InfinispanClient.class) {
+         if (clientCounter.decrementAndGet()==0) {
+            cache.stop();
+            infinispanManager.stop();
+            infinispanManager = null;
+         }
+      }
    }
 
+   @Override
    public int read(String table, String key, Set<String> fields, HashMap<String, ByteIterator> result) {
       try {
          Map<String, String> row;
@@ -98,11 +117,13 @@ public class InfinispanClient extends DB {
       }
    }
 
+   @Override
    public int scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
       logger.warn("Infinispan does not support scan semantics");
       return OK;
    }
 
+   @Override
    public int update(String table, String key, HashMap<String, ByteIterator> values) {
       try {
          Map<String, String> row = cache.get(key);
@@ -119,6 +140,7 @@ public class InfinispanClient extends DB {
       }
    }
 
+   @Override
    public int insert(String table, String key, HashMap<String, ByteIterator> values) {
       try {
          Map<String, String> row = new HashMap<String, String>();
@@ -133,6 +155,7 @@ public class InfinispanClient extends DB {
       }
    }
 
+   @Override
    public int delete(String table, String key) {
       try {
          cache.remove(key);
