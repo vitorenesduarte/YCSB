@@ -63,7 +63,7 @@ public class InfinispanClient extends DB {
                      new LocalIndexBuilder());
                infinispanManager.start();
 
-               cache = infinispanManager.getCache();
+               cache = infinispanManager.getCache("clustered");
                cache.start();
 
                if (_debug)
