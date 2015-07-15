@@ -56,7 +56,6 @@ public class InfinispanClient extends DB {
 
                Properties properties = new Properties();
                properties.setProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "100");
-
                infinispanManager = new EnsembleCacheManager(
                      host,
                      null,
@@ -97,7 +96,15 @@ public class InfinispanClient extends DB {
    public int read(String table, String key, Set<String> fields, HashMap<String, ByteIterator> result) {
       try {
          Map<String, String> row;
-         row = cache.get(key);
+         Object fromCache = cache.get(key);
+         try {
+            Map<Object, Object> m = (Map<Object, Object>) fromCache;
+            row = (Map) m;
+         } catch(java.lang.ClassCastException e1) {
+            //e1.printStackTrace();
+            row = null;
+         }
+
          if (row != null) {
             result.clear();
             if (fields == null || fields.isEmpty()) {
