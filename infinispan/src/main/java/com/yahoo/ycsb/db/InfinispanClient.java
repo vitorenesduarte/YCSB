@@ -95,7 +95,15 @@ public class InfinispanClient extends DB {
    @Override
    public int read(String table, String key, Set<String> fields, HashMap<String, ByteIterator> result) {
       try {
-         Map<String, String> row = (Map) cache.get(key);
+         Map<String, String> row;
+         Object fromCache = cache.get(key);
+         try {
+             Map<Object, Object> m = (Map<Object, Object>) fromCache;
+             row = (Map) m;
+         } catch(java.lang.ClassCastException e1) {
+             //e1.printStackTrace();
+             row = null;
+         }
 
          if (row != null) {
             result.clear();
