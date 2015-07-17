@@ -56,6 +56,14 @@
             </includes>
             <fileMode>0644</fileMode>
           </fileSet>
+	  <fileSet>
+            <outputDirectory>lib</outputDirectory>
+            <directory>target/lib</directory>
+    	    <includes>
+              <include>*.jar</include>
+            </includes>
+            <fileMode>0644</fileMode>
+          </fileSet>
         </fileSets>
       </sources>
     </moduleSet>
