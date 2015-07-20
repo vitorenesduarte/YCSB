@@ -36,6 +36,8 @@ public class InfinispanClient extends DB {
    private static BasicCacheContainer infinispanManager;
    private static BasicCache<String, Map<String, String>> cache;
 
+   private static final String CACHE_NAME_ENV_VARIABLE = "LEADS_YCSB_CACHE_NAME";
+
    public InfinispanClient() {
    }
 
@@ -63,7 +65,7 @@ public class InfinispanClient extends DB {
                      new LocalIndexBuilder());
                infinispanManager.start();
 
-               cache = infinispanManager.getCache("clustered");
+               createCache(System.getenv());
                cache.start();
 
                if (_debug)
@@ -78,6 +80,18 @@ public class InfinispanClient extends DB {
       }
 
       if (_debug) System.out.println("Client linked to "+Thread.currentThread().getName()+" created");
+
+   }
+
+   private void createCache(final Map<String, String> env) {
+		String cacheName = env.get(CACHE_NAME_ENV_VARIABLE);
+		if(cacheName == null) {
+			if (_debug) System.out.println("Use the default cache");
+			cache = infinispanManager.getCache();
+		} else {
+			cache = infinispanManager.getCache(cacheName);
+			if (_debug) System.out.println("Use the cache with name " + cacheName);
+		}
 
    }
 
