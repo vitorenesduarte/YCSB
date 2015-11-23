@@ -4,10 +4,10 @@ import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.StringByteIterator;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.ensemble.EnsembleCacheManager;
-import org.infinispan.ensemble.indexing.LocalIndexBuilder;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This is a client implementation for Infinispan 6.x.
+ * This is a client implementation for Infinispan.
  *
  * Some settings:
  *
@@ -41,7 +41,7 @@ public class InfinispanClient extends DB {
 
    @Override
    public void init() throws DBException {
-      
+
       synchronized (InfinispanClient.class) {
 
          if (clientCounter.getAndIncrement()==0) {
@@ -53,18 +53,10 @@ public class InfinispanClient extends DB {
                throw new RuntimeException("Required property \"host\" missing for InfinispanClient");
 
             try {
-
-               Properties properties = new Properties();
-               properties.setProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "100");
-
-               infinispanManager = new EnsembleCacheManager(
-                     host,
-                     null,
-                     properties,
-                     new LocalIndexBuilder());
+               infinispanManager = new RemoteCacheManager(host);
                infinispanManager.start();
 
-               cache = infinispanManager.getCache();
+               cache = infinispanManager.getCache(CacheContainer.DEFAULT_CACHE_NAME);
                cache.start();
 
                if (_debug)
@@ -127,15 +119,17 @@ public class InfinispanClient extends DB {
    public int update(String table, String key, HashMap<String, ByteIterator> values) {
       try {
          Map<String, String> row = cache.get(key);
-         if (row == null) {
-            row = StringByteIterator.getStringMap(values);
-            cache.put(key, row);
-         } else {
-            StringByteIterator.putAllAsStrings(row, values);
-         }
-
+         Map<String, String> tmp = StringByteIterator.getStringMap(values);
+         if (row==null)
+            row = tmp;
+         else
+            row.putAll(tmp);
+         cache.put(key,row);
+         if (_debug)
+            System.out.println("updating key: " + key+"("+row+")");
          return OK;
       } catch (Exception e) {
+         e.printStackTrace();
          return ERROR;
       }
    }
@@ -143,11 +137,10 @@ public class InfinispanClient extends DB {
    @Override
    public int insert(String table, String key, HashMap<String, ByteIterator> values) {
       try {
-         Map<String, String> row = new HashMap<String, String>();
-         row = StringByteIterator.getStringMap(values);
+         Map<String, String> row = StringByteIterator.getStringMap(values);
+         cache.put(key,row);
          if (_debug)
             System.out.println("Inserting key: " + key+"("+row+")");
-         cache.put(key,row);
          return OK;
       } catch (Exception e) {
          e.printStackTrace();
@@ -161,6 +154,7 @@ public class InfinispanClient extends DB {
          cache.remove(key);
          return OK;
       } catch (Exception e) {
+         e.printStackTrace();
          return ERROR;
       }
    }
