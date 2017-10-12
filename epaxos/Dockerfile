@@ -20,7 +20,23 @@ RUN tar zxvf YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /a
 
 ENV TYPE load
 ENV DB epaxos
+
 ENV WORKLOAD workloada
 ENV THREADS 1
+ENV RECORDCOUNT 1000
+ENV OPERATIONCOUNT 1000
 
-CMD ["sh", "-c", "/app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/bin/run.sh ${TYPE} ${DB} -P workload/${WORKLOAD} -threads ${THREADS}"]
+ENV HOST localhost
+ENV PORT 7087
+ENV LEADERLESS false
+ENV FAST false
+
+CMD ["sh", "-c", "/app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
+    -P /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
+    -threads ${THREADS} \
+    -p recordcount=${RECORDCOUNT} \
+    -p operationcount=${OPERATIONCOUNT} \
+    -p host=${HOST} \
+    -p port=${PORT} \
+    -p leaderless=${LEADERLESS} \
+    -p fast=${FAST}"]
