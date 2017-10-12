@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2012-2016 YCSB contributors. All rights reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you
  * may not use this file except in compliance with the License. You
  * may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
@@ -33,17 +33,38 @@ import java.util.Vector;
  */
 public class EPaxosClient extends DB {
 
-  Bindings.Parameters parameters = Bindings.NewParameters();
+  private Bindings.Parameters parameters = Bindings.NewParameters();
 
   public EPaxosClient() {
   }
 
+  @Override
   public void init() throws DBException {
-    parameters.Connect("localhost",7087,false,false);
+
+    boolean leaderless = false;
+    if ("true".equals(getProperties().getProperty("leaderless"))) {
+      leaderless = true;
+    }
+
+    boolean fast = false;
+    if ("true".equals(getProperties().getProperty("fast"))) {
+      fast = true;
+    }
+
+    if (!getProperties().containsKey("host") | !getProperties().containsKey("port")) {
+      parameters.Connect("localhost", 7087, leaderless, fast);
+    } else {
+      parameters.Connect(
+          getProperties().getProperty("host").split(":")[0],
+          Integer.parseInt(getProperties().getProperty("host").split(":")[1]),
+          leaderless,
+          fast);
+
+    }
   }
 
+  @Override
   public void cleanup() {
-
   }
 
   @Override
@@ -53,25 +74,26 @@ public class EPaxosClient extends DB {
   }
 
   @Override
-  public Status scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
+  public Status scan(String table, String startkey, int recordcount, Set<String> fields,
+                     Vector<HashMap<String, ByteIterator>> result) {
     return Status.ERROR;
   }
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
-    parameters.Write(key.hashCode(),values.toString());
+    parameters.Write(key.hashCode(), values.toString());
     return Status.OK;
   }
 
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
-    parameters.Write(key.hashCode(),values.toString());
+    parameters.Write(key.hashCode(), values.toString());
     return Status.OK;
   }
 
   @Override
   public Status delete(String table, String key) {
-    parameters.Write(key.hashCode(),"");
+    parameters.Write(key.hashCode(), "");
     return Status.OK;
   }
 
