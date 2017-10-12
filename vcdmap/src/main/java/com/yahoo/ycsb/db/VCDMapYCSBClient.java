@@ -50,8 +50,7 @@ public class VCDMapYCSBClient extends DB {
     }
 
     public void init() throws DBException {
-        Thread t = new Thread(server1);
-        t.start();
+        server1.serverInit();
     }
 
     @Override
