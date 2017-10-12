@@ -150,6 +150,7 @@ LICENSE file.
     <module>solr6</module>
     <module>tarantool</module>
     <module>vcdmap</module>
+    <module>epaxos</module>
     <!--<module>voldemort</module>-->
   </modules>
 
