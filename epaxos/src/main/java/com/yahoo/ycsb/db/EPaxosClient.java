@@ -55,8 +55,8 @@ public class EPaxosClient extends DB {
       parameters.Connect("localhost", 7087, leaderless, fast);
     } else {
       parameters.Connect(
-          getProperties().getProperty("host").split(":")[0],
-          Integer.parseInt(getProperties().getProperty("host").split(":")[1]),
+          getProperties().getProperty("host"),
+          Integer.parseInt(getProperties().getProperty("host")),
           leaderless,
           fast);
 
