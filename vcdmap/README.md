@@ -40,7 +40,7 @@ mvn install:install-file -Dfile=vcdmapserver/target/vcdmapserver-0.1.0-SNAPSHOT.
   ```
 3. Go to YCSB root directory and compile the VCDMap bindings:
   ```
-mvn -Dcheckstyle.skip -X -pl com.yahoo.ycsb:vcdmap-binding -am clean package
+mvn -X -pl com.yahoo.ycsb:vcdmap-binding -am clean package
   ```
 
 ### 4. Testing through YCSB shell
