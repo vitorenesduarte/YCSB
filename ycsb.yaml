@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ycsb
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: ycsb
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: client
+          image: 0track/ycsb
+          env:
+            - name : TYPE
+              value: "load"
+            - name : DB
+              value: "epaxos"
+            - name : WORKLOAD
+              value: "workloada"
+            - name : THREADS
+              value: "1"
+            - name : RECORDCOUNT
+              value: "1000"
+            - name : OPERATIONCOUNT
+              value: "1000"
+            - name : HOST
+              value: "epaxos-master"
+            - name : PORT
+              value: "7087"
+            - name : LEADERLESS
+              value: "true"
+            - name : FAST
+              value: "false"
