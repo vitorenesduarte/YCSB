@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.Vector;
 
 /**
- * This is a client implementation for Infinispan 5.x.
+ * This is a client implementation for Epaxos.
  */
 public class EPaxosClient extends DB {
 
