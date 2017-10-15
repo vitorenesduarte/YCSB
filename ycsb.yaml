@@ -13,6 +13,7 @@ spec:
       containers:
         - name: client
           image: 0track/ycsb
+          imagePullPolicy: Always 
           env:
             - name : TYPE
               value: "load"
