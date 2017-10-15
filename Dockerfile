@@ -39,4 +39,5 @@ CMD ["sh", "-c", "/app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB
     -p host=${HOST} \
     -p port=${PORT} \
     -p leaderless=${LEADERLESS} \
-    -p fast=${FAST}"]
+    -p fast=${FAST}"] \
+    ${EXTRA}

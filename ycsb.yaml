@@ -31,6 +31,8 @@ spec:
             - name : PORT
               value: "7087"
             - name : LEADERLESS
-              value: "true"
+              value: "false"
             - name : FAST
               value: "false"
+            - name : EXTRA
+              value: ""

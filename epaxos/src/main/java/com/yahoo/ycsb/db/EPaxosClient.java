@@ -34,6 +34,7 @@ import java.util.Vector;
 public class EPaxosClient extends DB {
 
   private Bindings.Parameters parameters = Bindings.NewParameters();
+  private boolean verbose = false;
 
   public EPaxosClient() {
   }
@@ -49,6 +50,10 @@ public class EPaxosClient extends DB {
     boolean fast = false;
     if ("true".equals(getProperties().getProperty("fast"))) {
       fast = true;
+    }
+
+    if ("true".equals(getProperties().getProperty("verbose"))) {
+      verbose = true;
     }
 
     if (!getProperties().containsKey("host") | !getProperties().containsKey("port")) {
@@ -70,24 +75,36 @@ public class EPaxosClient extends DB {
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
     parameters.Read(key.hashCode());
+    if (verbose){
+      System.out.println("READ: "+result.toString());
+    }
     return Status.OK;
   }
 
   @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
+    if (verbose){
+      System.out.println("SCAN: "+result.toString());
+    }
     return Status.ERROR;
   }
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
     parameters.Write(key.hashCode(), values.toString());
+    if (verbose){
+      System.out.println("UPDATE: "+values.toString());
+    }
     return Status.OK;
   }
 
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
     parameters.Write(key.hashCode(), values.toString());
+    if (verbose){
+      System.out.println("INSERT: "+values.toString());
+    }
     return Status.OK;
   }
 
