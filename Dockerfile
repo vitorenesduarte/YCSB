@@ -30,6 +30,7 @@ ENV HOST localhost
 ENV PORT 7087
 ENV LEADERLESS false
 ENV FAST false
+ENV EXTRA ""
 
 CMD ["sh", "-c", "/app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \

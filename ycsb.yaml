@@ -35,4 +35,4 @@ spec:
             - name : FAST
               value: "false"
             - name : EXTRA
-              value: ""
+              value: "-p verbose=true"
