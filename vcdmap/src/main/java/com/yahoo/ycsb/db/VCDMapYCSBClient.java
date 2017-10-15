@@ -38,7 +38,7 @@ import client.VCDMapClient;
  */
 public class VCDMapYCSBClient extends DB {
 
-  private VCDMapServer<String, Map<String, String>> server1 = new VCDMapServer<>("table1");
+  private VCDMapServer<String, Map<String, String>> server1 = new VCDMapServer<>("table1", new String[] {"port=6000"});
   private VCDMapClient<String, Map<String, String>> client1 = new VCDMapClient<>("Client1", server1);
 
   public VCDMapYCSBClient() {
