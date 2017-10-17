@@ -98,7 +98,9 @@ public class EPaxosClient extends DB {
     try {
       result = new HashMap<>();
       byte[] data = epaxos.Read(hash(key));
-      StringByteIterator.putAllAsByteIterators(result, unmarshal(data));
+      if (data != null) {
+        StringByteIterator.putAllAsByteIterators(result, unmarshal(data));
+      }
       if (verbose) {
         System.out.println("READ: " + key + " -> " + result);
       }
@@ -116,8 +118,10 @@ public class EPaxosClient extends DB {
       result = new Vector<>();
       HashMap<String, ByteIterator> item = new HashMap<>();
       byte[] data = epaxos.Scan(hash(startkey));
-      StringByteIterator.putAllAsByteIterators(item, unmarshal(data));
-      result.add(item);
+      if (data != null) {
+        StringByteIterator.putAllAsByteIterators(item, unmarshal(data));
+        result.add(item);
+      }
       if (verbose) {
         System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
       }
