@@ -84,7 +84,7 @@ public class EPaxosClient extends DB {
       byte[] data = marshal(StringByteIterator.getStringMap(values));
       epaxos.Write(hash(key), data);
       if (verbose) {
-        System.out.println("UPDATE: " + key + " -> " + values);
+        System.out.println("INSERT: " + key + " -> " + values);
       }
       return Status.OK;
     } catch (IOException e) {
@@ -130,7 +130,18 @@ public class EPaxosClient extends DB {
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
-    return Status.NOT_IMPLEMENTED;
+    try {
+      byte[] data = marshal(StringByteIterator.getStringMap(values));
+      epaxos.Write(hash(key), data);
+      if (verbose) {
+        System.out.println("UPDATE: " + key + " -> " + values);
+      }
+      return Status.OK;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return Status.ERROR;
+
   }
 
 

@@ -30,7 +30,7 @@ LICENSE file.
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
-            <groupId>vcd</groupId>
+            <groupId>org.imdea.vcd</groupId>
             <artifactId>vcdmapclient</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
