@@ -76,6 +76,7 @@ public class EPaxosClient extends DB {
 
   @Override
   public void cleanup() {
+    epaxos.Disconnect();
   }
 
   @Override
