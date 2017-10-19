@@ -109,7 +109,7 @@ public class VCDMapYCSBClient extends DB {
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
     HashMap<String, String> row = new HashMap<>();
     StringByteIterator.putAllAsStrings(row, values);
-    client1.sendPut(key, row);
+    client1.sendInsert(key, row);
     return Status.OK;
   }
 
