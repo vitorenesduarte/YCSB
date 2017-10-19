@@ -15,6 +15,7 @@ RUN GOPATH=/app/epaxos go get github.com/sridharv/gojava
 RUN GOPATH=/app/epaxos /app/epaxos/bin/gojava -o /app/epaxos/epaxos.jar build bindings
 RUN mvn install:install-file -Dfile=/app/epaxos/epaxos.jar -DgroupId=epaxos -DartifactId=epaxos -Dversion=1.0 -Dpackaging=jar
 
+ADD https://api.github.com/repos/otrack/YCSB/git/refs/heads/master ycsb-version.json
 RUN git clone -b epaxos https://github.com/otrack/YCSB
 RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding -am clean package
 RUN tar zxvf YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
