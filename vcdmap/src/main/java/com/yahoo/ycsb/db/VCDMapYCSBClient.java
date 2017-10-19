@@ -18,46 +18,61 @@
 package com.yahoo.ycsb.db;
 
 
+import com.google.protobuf.ByteString;
 import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.Status;
 import com.yahoo.ycsb.StringByteIterator;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
-
+import java.util.*;
 
 import server.VCDMapServer;
 import client.VCDMapClient;
+
+import scala.Option;
+import scala.util.Either;
 
 /**
  * This is a client implementation for VCD-Map 0.1-SNAPSHOT.
  */
 public class VCDMapYCSBClient extends DB {
 
-  private VCDMapServer<String, Map<String, String>> server1 = new VCDMapServer<>("table1", new String[] {"port=6000"});
-  private VCDMapClient<String, Map<String, String>> client1 = new VCDMapClient<>("Client1", server1);
+  //VCDMapServer[B] where  Map[String, B]
+  private static VCDMapServer<Map<String, String>> server1;
+  private static VCDMapClient<Map<String, String>> client1;
+  private Boolean verbose = false;
 
   public VCDMapYCSBClient() {
 
   }
 
   public void init() throws DBException {
-    server1.serverInit();
+    synchronized (VCDMapYCSBClient.class){
+      if(server1 == null) {
+        String host = getProperties().getProperty("host");
+        String port = getProperties().getProperty("port");
+
+        String config = "host=" + host + "port=" + port;
+
+        server1 = new VCDMapServer<>("table1", true, true, new String[]{config});
+        client1 = new VCDMapClient<>("Client1", true, server1);
+
+        server1.serverInit();
+      }
+    }
+    verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
+
   }
 
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
-    scala.Option<Map<String, String>> r = client1.sendGet(key);
-    //This should be done with getOrElse but I'm tired
+    Either<Option<Map<String, String>>, Collection<Map<String,String>>> r = client1.sendGet(key);
     HashMap<String, String> defaultRow = new HashMap<>();
-    if (r.isEmpty()) {
+    if (r.left().get().isEmpty()) {
       StringByteIterator.putAllAsByteIterators(result, defaultRow);
     } else {
-      HashMap<String, String> row = new HashMap<>(r.get());
+      HashMap<String, String> row = new HashMap<>(r.left().get().get());
       StringByteIterator.putAllAsByteIterators(result, row);
     }
     return Status.OK;
@@ -66,6 +81,15 @@ public class VCDMapYCSBClient extends DB {
   @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
+
+    Either<Option<Map<String, String>>, Collection<Map<String,String>>> r = client1.sendScan(startkey, recordcount);
+    Vector<Map<String,String>> values = new Vector<>(r.right().get());
+
+    for(int i = 0; i < values.size(); i++) {
+      HashMap<String, ByteIterator> item = new HashMap<>();
+      StringByteIterator.putAllAsByteIterators(item, values.elementAt(i));
+      result.add(item);
+    }
     return Status.OK;
   }
 
@@ -75,6 +99,11 @@ public class VCDMapYCSBClient extends DB {
     StringByteIterator.putAllAsStrings(row, values);
     client1.sendUpdate(key, row);
     return Status.OK;
+  }
+
+  @Override
+  public void cleanup() {
+    server1.serverClose();
   }
 
   @Override
