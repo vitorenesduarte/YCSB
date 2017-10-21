@@ -55,7 +55,7 @@ public class VCDMapYCSBClient extends DB {
         localReads = Boolean.valueOf(getProperties().getProperty("lread"));
         verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
 
-        String[] config = {"zk=" + host+":"+port};
+        String[] config = {"-zk=" + host+":"+port};
 
         server1 = new VCDMapServer<>("table1", localReads, verbose, config);
         client1 = new VCDMapClient<>("Client1", true, server1);
