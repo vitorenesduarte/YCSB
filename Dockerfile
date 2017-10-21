@@ -18,7 +18,7 @@ RUN GOPATH=/app/epaxos /app/epaxos/bin/gojava -o /app/epaxos/epaxos.jar build bi
 RUN mvn install:install-file -Dfile=/app/epaxos/epaxos.jar -DgroupId=epaxos -DartifactId=epaxos -Dversion=1.0 -Dpackaging=jar
 
 ADD https://api.github.com/repos/vitorenesduarte/VCD-java-client/git/refs/heads/master vcd-java-client-version.json
-RUN git clone https://github.com/vitorenesduarte/VCD-java-client
+RUN git clone -b zk https://github.com/vitorenesduarte/VCD-java-client
 RUN mvn -f VCD-java-client clean install -DskipTests
 
 ADD https://api.bitbucket.org/1.0/repositories/tfr/vcd-map vcd-map-version.json
