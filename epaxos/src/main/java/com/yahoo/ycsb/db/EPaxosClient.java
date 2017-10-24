@@ -63,11 +63,12 @@ public class EPaxosClient extends DB {
     }
 
     if (!getProperties().containsKey("host") | !getProperties().containsKey("port")) {
-      epaxos.Connect("localhost", 7087, leaderless, fast);
+      epaxos.Connect("localhost", 7087, verbose, leaderless, fast);
     } else {
       epaxos.Connect(
           getProperties().getProperty("host"),
           Integer.parseInt(getProperties().getProperty("port")),
+          verbose,
           leaderless,
           fast);
 
