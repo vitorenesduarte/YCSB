@@ -22,7 +22,7 @@ RUN git clone -b zk https://github.com/vitorenesduarte/VCD-java-client
 RUN mvn -f VCD-java-client clean install -DskipTests
 
 ADD https://api.bitbucket.org/1.0/repositories/tfr/vcd-map vcd-map-version.json
-RUN git clone -b newJavaClient https://bitbucket.org/tfr/vcd-map
+RUN git clone https://bitbucket.org/tfr/vcd-map
 RUN make -C vcd-map install
 
 ADD https://api.github.com/repos/otrack/YCSB/git/refs/heads/epaxos ycsb-version.json
