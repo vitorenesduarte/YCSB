@@ -94,7 +94,9 @@ public class EPaxosClient extends DB {
 
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
-    if (hasFailed) return Status.ERROR;
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
 
       byte[] data = marshal(StringByteIterator.getStringMap(values));
@@ -116,7 +118,9 @@ public class EPaxosClient extends DB {
 
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
-    if (hasFailed) return Status.ERROR;
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
       result = new HashMap<>();
       final byte[][] data = new byte[1][1];
@@ -144,7 +148,11 @@ public class EPaxosClient extends DB {
   @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
-    if (hasFailed) return Status.ERROR;
+
+    if (hasFailed) {
+      return Status.ERROR;
+    }
+
     try {
       result = new Vector<>();
       HashMap<String, ByteIterator> item = new HashMap<>();
@@ -172,7 +180,9 @@ public class EPaxosClient extends DB {
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
-    if (hasFailed) return Status.ERROR;
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
       byte[] data = marshal(StringByteIterator.getStringMap(values));
 
