@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 public class EPaxosClient extends DB {
 
   private static final int TIMEOUT=10000; // in ms.
+
+  private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   private Bindings.Parameters epaxos = Bindings.NewParameters();
   private boolean verbose = false;
@@ -90,7 +94,7 @@ public class EPaxosClient extends DB {
 
       byte[] data = marshal(StringByteIterator.getStringMap(values));
 
-      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data)).get(TIMEOUT, TimeUnit.MILLISECONDS);
+      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data), executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
 
       if (verbose) {
         System.out.println("INSERT: " + key + " -> " + values);
@@ -108,7 +112,7 @@ public class EPaxosClient extends DB {
       result = new HashMap<>();
       final byte[][] data = new byte[1][1];
 
-      CompletableFuture.runAsync(() -> data[0] = epaxos.Read(hash(key))).get(TIMEOUT, TimeUnit.MILLISECONDS);
+      CompletableFuture.runAsync(() -> data[0] = epaxos.Read(hash(key)), executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
 
       if (data[0] != null) {
         StringByteIterator.putAllAsByteIterators(result, unmarshal(data[0]));
@@ -133,7 +137,7 @@ public class EPaxosClient extends DB {
       HashMap<String, ByteIterator> item = new HashMap<>();
       final byte[][] data = new byte[1][1];
 
-      CompletableFuture.runAsync(() -> data[0] = epaxos.Scan(hash(startkey))).get(TIMEOUT, TimeUnit.MILLISECONDS);
+      CompletableFuture.runAsync(() -> data[0] = epaxos.Scan(hash(startkey)), executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
 
       if (data[0] != null) {
         StringByteIterator.putAllAsByteIterators(item, unmarshal(data[0]));
@@ -155,7 +159,7 @@ public class EPaxosClient extends DB {
     try {
       byte[] data = marshal(StringByteIterator.getStringMap(values));
 
-      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data)).get(TIMEOUT, TimeUnit.MILLISECONDS);
+      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data), executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
 
       if (verbose) {
         System.out.println("UPDATE: " + key + " -> " + values);
