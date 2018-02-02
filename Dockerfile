@@ -50,6 +50,8 @@ ENV LEADERLESS false
 ENV FAST false
 ENV EXTRA ""
 
+ENV JAVA_OPTS "-Xmx2G"
+
 CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
     -threads ${THREADS} \

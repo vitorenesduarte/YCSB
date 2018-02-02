@@ -45,16 +45,19 @@ public class EPaxosClient extends DB {
 
   private static final int TIMEOUT = 10000; // in ms.
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(1);
-
-  private Bindings.Parameters epaxos = Bindings.NewParameters();
-  private boolean verbose = false;
+  private ExecutorService executorService;
+  private Bindings.Parameters epaxos;
+  private boolean verbose;
 
   public EPaxosClient() {
   }
 
   @Override
   public void init() throws DBException {
+
+    verbose = false;
+    epaxos = Bindings.NewParameters();
+    executorService = Executors.newFixedThreadPool(1);
 
     boolean leaderless = false;
     if ("true".equals(getProperties().getProperty("leaderless"))) {
@@ -103,6 +106,7 @@ public class EPaxosClient extends DB {
       return Status.OK;
     } catch (Exception e) {
       e.printStackTrace();
+      reconnect();
     }
     return Status.ERROR;
   }
@@ -127,6 +131,7 @@ public class EPaxosClient extends DB {
 
     } catch (Exception e) {
       e.printStackTrace();
+      reconnect();
     }
     return Status.ERROR;
   }
@@ -153,6 +158,7 @@ public class EPaxosClient extends DB {
       return Status.OK;
     } catch (Exception e) {
       e.printStackTrace();
+      reconnect();
     }
     return Status.ERROR;
   }
@@ -180,6 +186,16 @@ public class EPaxosClient extends DB {
   @Override
   public Status delete(String table, String key) {
     return Status.NOT_IMPLEMENTED;
+  }
+
+  private void reconnect(){
+    System.err.println("Reconnecting ..");
+    cleanup();
+    try {
+      init();
+    } catch (DBException e1) {
+      e1.printStackTrace();
+    }
   }
 
   // adapted from String.hashCode()
