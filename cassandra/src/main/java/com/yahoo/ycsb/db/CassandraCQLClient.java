@@ -28,6 +28,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CassandraCQLClient extends DB {
 
   private static Cluster cluster = null;
+  private static String dcname = null;
   private static Session session = null;
 
   private static ConsistencyLevel readConsistencyLevel = ConsistencyLevel.ONE;
@@ -87,7 +89,11 @@ public class CassandraCQLClient extends DB {
 
   public static final String TRACING_PROPERTY = "cassandra.tracing";
   public static final String TRACING_PROPERTY_DEFAULT = "false";
-  
+
+  public static final String DC_NAME_PROPERTY =
+      "cassandra.dcname";
+  public static final String DC_NAME_PROPERTY_DEFAULT = "local";
+
   /**
    * Count the number of times initialized to teardown on the last
    * {@link #cleanup()}.
@@ -144,6 +150,17 @@ public class CassandraCQLClient extends DB {
         writeConsistencyLevel = ConsistencyLevel.valueOf(
             getProperties().getProperty(WRITE_CONSISTENCY_LEVEL_PROPERTY,
                 WRITE_CONSISTENCY_LEVEL_PROPERTY_DEFAULT));
+
+        dcname = getProperties().getProperty(DC_NAME_PROPERTY,
+            DC_NAME_PROPERTY_DEFAULT);
+
+        if (!dcname.equals(DC_NAME_PROPERTY_DEFAULT)) {
+          DCAwareRoundRobinPolicy.Builder builder = DCAwareRoundRobinPolicy.builder();
+          builder.withUsedHostsPerRemoteDc(1);
+          builder.allowRemoteDCsForLocalConsistencyLevel();
+          builder.withLocalDc(dcname);
+          cluster.builder().withLoadBalancingPolicy(builder.build());
+        }
 
         if ((username != null) && !username.isEmpty()) {
           cluster = Cluster.builder().withCredentials(username, password)

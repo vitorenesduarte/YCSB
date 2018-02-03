@@ -33,20 +33,32 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is a client implementation for EPaxos.
  */
 public class EPaxosClient extends DB {
 
-  private Bindings.Parameters epaxos = Bindings.NewParameters();
-  private boolean verbose = false;
+  private static final int TIMEOUT = 10000; // in ms.
+
+  private ExecutorService executorService;
+  private Bindings.Parameters epaxos;
+  private boolean verbose;
+  private boolean hasFailed;
 
   public EPaxosClient() {
   }
 
   @Override
   public void init() throws DBException {
+    verbose = false;
+    hasFailed = false;
+    epaxos = Bindings.NewParameters();
+    executorService = Executors.newFixedThreadPool(1);
 
     boolean leaderless = false;
     if ("true".equals(getProperties().getProperty("leaderless"))) {
@@ -82,33 +94,53 @@ public class EPaxosClient extends DB {
 
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
+
       byte[] data = marshal(StringByteIterator.getStringMap(values));
-      epaxos.Write(hash(key), data);
+
+      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data),
+          executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
+
       if (verbose) {
         System.out.println("INSERT: " + key + " -> " + values);
       }
       return Status.OK;
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
+      hasFailed = true;
+      epaxos.Disconnect();
     }
     return Status.ERROR;
   }
 
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
       result = new HashMap<>();
-      byte[] data = epaxos.Read(hash(key));
-      if (data != null) {
-        StringByteIterator.putAllAsByteIterators(result, unmarshal(data));
+      final byte[][] data = new byte[1][1];
+
+      CompletableFuture.runAsync(() -> data[0] = epaxos.Read(hash(key)),
+          executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
+
+      if (data[0] != null) {
+        StringByteIterator.putAllAsByteIterators(result, unmarshal(data[0]));
       }
+
       if (verbose) {
         System.out.println("READ: " + key + " -> " + result);
       }
       return Status.OK;
-    } catch (IOException | ClassNotFoundException e) {
+
+    } catch (Exception e) {
       e.printStackTrace();
+      hasFailed = true;
+      epaxos.Disconnect();
     }
     return Status.ERROR;
   }
@@ -116,35 +148,55 @@ public class EPaxosClient extends DB {
   @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
+
+    if (hasFailed) {
+      return Status.ERROR;
+    }
+
     try {
       result = new Vector<>();
       HashMap<String, ByteIterator> item = new HashMap<>();
-      byte[] data = epaxos.Scan(hash(startkey));
-      if (data != null) {
-        StringByteIterator.putAllAsByteIterators(item, unmarshal(data));
+      final byte[][] data = new byte[1][1];
+
+      CompletableFuture.runAsync(() -> data[0] = epaxos.Scan(hash(startkey)),
+          executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
+
+      if (data[0] != null) {
+        StringByteIterator.putAllAsByteIterators(item, unmarshal(data[0]));
         result.add(item);
       }
+
       if (verbose) {
         System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
       }
       return Status.OK;
-    } catch (IOException | ClassNotFoundException e) {
+    } catch (Exception e) {
       e.printStackTrace();
+      hasFailed = true;
+      epaxos.Disconnect();
     }
     return Status.ERROR;
   }
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
+    if (hasFailed) {
+      return Status.ERROR;
+    }
     try {
       byte[] data = marshal(StringByteIterator.getStringMap(values));
-      epaxos.Write(hash(key), data);
+
+      CompletableFuture.runAsync(() -> epaxos.Write(hash(key), data),
+          executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
+
       if (verbose) {
         System.out.println("UPDATE: " + key + " -> " + values);
       }
       return Status.OK;
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
+      hasFailed = true;
+      epaxos.Disconnect();
     }
     return Status.ERROR;
 

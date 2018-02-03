@@ -50,6 +50,8 @@ ENV LEADERLESS false
 ENV FAST false
 ENV EXTRA ""
 
+RUN rm -Rf /app/YCSB && rm -Rf /root/.m2 && rm -Rf /app/epaxos && rm -Rf /app/vcd-map && rm -Rf VCD-java-client && rm -f /app/*.json && rm -Rf ycsb-epaxos-binding-0.13.0-SNAPSHOT && rm -Rf ycsb-vcdmap-binding-0.13.0-SNAPSHOT
+
 CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
     -threads ${THREADS} \
