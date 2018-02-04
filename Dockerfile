@@ -30,11 +30,17 @@ RUN make -C vcd-map install
 ADD https://api.github.com/repos/otrack/YCSB/git/refs/heads/epaxos ycsb-version.json
 RUN git clone -b epaxos https://github.com/otrack/YCSB
 RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding,com.yahoo.ycsb:vcdmap-binding -am clean package -DskipTests
+
+RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-binding -am clean package -DskipTests
+
 RUN tar zxvf /app/YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 RUN tar zxvf /app/YCSB/vcdmap/target/ycsb-vcdmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+RUN tar zxvf /app/YCSB/vcdmap/target/cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-vcdmap-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
+RUN cp -Rf /app/cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 
 ENV TYPE load
 ENV DB epaxos
@@ -49,8 +55,6 @@ ENV PORT 7087
 ENV LEADERLESS false
 ENV FAST false
 ENV EXTRA ""
-
-RUN rm -Rf /app/YCSB && rm -Rf /root/.m2 && rm -Rf /app/epaxos && rm -Rf /app/vcd-map && rm -Rf VCD-java-client && rm -f /app/*.json && rm -Rf ycsb-epaxos-binding-0.13.0-SNAPSHOT && rm -Rf ycsb-vcdmap-binding-0.13.0-SNAPSHOT
 
 CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
