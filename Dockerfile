@@ -40,7 +40,7 @@ RUN tar zxvf /app/YCSB/vcdmap/target/cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-vcdmap-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
-RUN cp -Rf /app/cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
+RUN cp -Rf /app/ycsb-cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 
 ENV TYPE load
 ENV DB epaxos
