@@ -35,7 +35,7 @@ RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-bi
 
 RUN tar zxvf /app/YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 RUN tar zxvf /app/YCSB/vcdmap/target/ycsb-vcdmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
-RUN tar zxvf /app/YCSB/vcdmap/target/cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+RUN tar zxvf /app/YCSB/cassandra/target/ycsb-cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
