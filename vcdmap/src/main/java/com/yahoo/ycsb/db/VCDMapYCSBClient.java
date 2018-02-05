@@ -48,20 +48,20 @@ public class VCDMapYCSBClient extends DB {
   }
 
   public void init() throws DBException {
-    synchronized (VCDMapYCSBClient.class){
-      if(server1 == null) {
+    synchronized (VCDMapYCSBClient.class) {
+      if (server1 == null) {
         String host = getProperties().getProperty("host");
         String port = getProperties().getProperty("port");
         localReads = Boolean.valueOf(getProperties().getProperty("lread"));
         verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
 
-        String[] config = {"-zk=" + host+":"+port};
+        String[] config = {"-zk=" + host + ":" + port};
 
         server1 = new VCDMapServer<>("table1", localReads, verbose, config);
 
         server1.serverInit();
       }
-      }
+    }
 
     client1 = new VCDMapClient<>(verbose, server1);
 
@@ -92,7 +92,7 @@ public class VCDMapYCSBClient extends DB {
     Either<Option<Map<String, String>>, Collection<Map<String, String>>> r = client1.sendScan(startkey, recordcount);
     Vector<Map<String, String>> values = new Vector<>(r.right().get());
 
-    for(int i = 0; i < values.size(); i++) {
+    for (int i = 0; i < values.size(); i++) {
       HashMap<String, ByteIterator> item = new HashMap<>();
       StringByteIterator.putAllAsByteIterators(item, values.elementAt(i));
       result.add(item);
