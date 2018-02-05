@@ -39,7 +39,7 @@ import java.util.Vector;
 public class VCDMapYCSBClient extends DB {
 
   private static VCDMapServer<Map<String, String>> server1;
-  private static VCDMapClient<Map<String, String>> client1;
+  private VCDMapClient<Map<String, String>> client1;
   private static volatile boolean localReads = false;
   private static volatile boolean verbose = false;
 
@@ -58,11 +58,12 @@ public class VCDMapYCSBClient extends DB {
         String[] config = {"-zk=" + host+":"+port};
 
         server1 = new VCDMapServer<>("table1", localReads, verbose, config);
-        client1 = new VCDMapClient<>("Client1", true, server1);
 
         server1.serverInit();
       }
-    }
+      }
+
+    client1 = new VCDMapClient<>(verbose, server1);
 
   }
 
