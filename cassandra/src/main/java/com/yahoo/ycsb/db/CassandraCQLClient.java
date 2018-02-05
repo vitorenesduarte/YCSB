@@ -1,18 +1,18 @@
 /**
  * Copyright (c) 2013-2015 YCSB contributors. All rights reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License. See accompanying LICENSE file.
- *
+ * <p>
  * Submitted by Chrisjan Matser on 10/11/2010.
  */
 package com.yahoo.ycsb.db;
@@ -28,6 +28,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -45,9 +46,11 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.yahoo.ycsb.Client.DO_TRANSACTIONS_PROPERTY;
+
 /**
  * Cassandra 2.x CQL client.
- *
+ * <p>
  * See {@code cassandra2/README.md} for details.
  *
  * @author cmatser
@@ -103,7 +106,7 @@ public class CassandraCQLClient extends DB {
   private static boolean debug = false;
 
   private static boolean trace = false;
-  
+
   /**
    * Initialize any state for this DB. Called once per DB instance; there is one
    * DB instance per client thread.
@@ -128,7 +131,7 @@ public class CassandraCQLClient extends DB {
         debug =
             Boolean.parseBoolean(getProperties().getProperty("debug", "false"));
         trace = Boolean.valueOf(getProperties().getProperty(TRACING_PROPERTY, TRACING_PROPERTY_DEFAULT));
-        
+
         String host = getProperties().getProperty(HOSTS_PROPERTY);
         if (host == null) {
           throw new DBException(String.format(
@@ -175,7 +178,7 @@ public class CassandraCQLClient extends DB {
         if (maxConnections != null) {
           cluster.getConfiguration().getPoolingOptions()
               .setMaxConnectionsPerHost(HostDistance.LOCAL,
-              Integer.valueOf(maxConnections));
+                  Integer.valueOf(maxConnections));
         }
 
         String coreConnections = getProperties().getProperty(
@@ -183,7 +186,7 @@ public class CassandraCQLClient extends DB {
         if (coreConnections != null) {
           cluster.getConfiguration().getPoolingOptions()
               .setCoreConnectionsPerHost(HostDistance.LOCAL,
-              Integer.valueOf(coreConnections));
+                  Integer.valueOf(coreConnections));
         }
 
         String connectTimoutMillis = getProperties().getProperty(
@@ -210,7 +213,26 @@ public class CassandraCQLClient extends DB {
               discoveredHost.getRack());
         }
 
-        session = cluster.connect(keyspace);
+        try {
+          session = cluster.connect(keyspace);
+        } catch (InvalidQueryException e) {
+          if (getProperties().getProperty(DO_TRANSACTIONS_PROPERTY).equals(String.valueOf(false))) {
+            System.out.println("Creating keyspace ...");
+            session = cluster.connect();
+            session.execute("create keyspace ycsb WITH REPLICATION = " +
+                "{'class' : 'SimpleStrategy', 'replication_factor': 3 };");
+            session = cluster.connect(keyspace);
+            session.execute(
+                "create table usertable (y_id varchar primary key," +
+                    "field0 varchar, field1 varchar, field2 varchar," +
+                    "field3 varchar, field4 varchar, field5 varchar," +
+                    "field6 varchar, field7 varchar, field8 varchar," +
+                    "field9 varchar);");
+          }else{
+            throw new DBException(e);
+          }
+        }
+
 
       } catch (Exception e) {
         throw new DBException(e);
@@ -244,19 +266,15 @@ public class CassandraCQLClient extends DB {
    * Read a record from the database. Each field/value pair from the result will
    * be stored in a HashMap.
    *
-   * @param table
-   *          The name of the table
-   * @param key
-   *          The record key of the record to read.
-   * @param fields
-   *          The list of fields to read, or null for all of them
-   * @param result
-   *          A HashMap of field/value pairs for the result
+   * @param table  The name of the table
+   * @param key    The record key of the record to read.
+   * @param fields The list of fields to read, or null for all of them
+   * @param result A HashMap of field/value pairs for the result
    * @return Zero on success, a non-zero error code on error
    */
   @Override
   public Status read(String table, String key, Set<String> fields,
-      Map<String, ByteIterator> result) {
+                     Map<String, ByteIterator> result) {
     try {
       Statement stmt;
       Select.Builder selectBuilder;
@@ -280,7 +298,7 @@ public class CassandraCQLClient extends DB {
       if (trace) {
         stmt.enableTracing();
       }
-      
+
       ResultSet rs = session.execute(stmt);
 
       if (rs.isExhausted()) {
@@ -313,26 +331,21 @@ public class CassandraCQLClient extends DB {
   /**
    * Perform a range scan for a set of records in the database. Each field/value
    * pair from the result will be stored in a HashMap.
-   *
+   * <p>
    * Cassandra CQL uses "token" method for range scan which doesn't always yield
    * intuitive results.
    *
-   * @param table
-   *          The name of the table
-   * @param startkey
-   *          The record key of the first record to read.
-   * @param recordcount
-   *          The number of records to read
-   * @param fields
-   *          The list of fields to read, or null for all of them
-   * @param result
-   *          A Vector of HashMaps, where each HashMap is a set field/value
-   *          pairs for one record
+   * @param table       The name of the table
+   * @param startkey    The record key of the first record to read.
+   * @param recordcount The number of records to read
+   * @param fields      The list of fields to read, or null for all of them
+   * @param result      A Vector of HashMaps, where each HashMap is a set field/value
+   *                    pairs for one record
    * @return Zero on success, a non-zero error code on error
    */
   @Override
   public Status scan(String table, String startkey, int recordcount,
-      Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
+                     Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
 
     try {
       Statement stmt;
@@ -372,7 +385,7 @@ public class CassandraCQLClient extends DB {
       if (trace) {
         stmt.enableTracing();
       }
-      
+
       ResultSet rs = session.execute(stmt);
 
       HashMap<String, ByteIterator> tuple;
@@ -409,12 +422,9 @@ public class CassandraCQLClient extends DB {
    * values HashMap will be written into the record with the specified record
    * key, overwriting any existing values with the same field name.
    *
-   * @param table
-   *          The name of the table
-   * @param key
-   *          The record key of the record to write.
-   * @param values
-   *          A HashMap of field/value pairs to update in the record
+   * @param table  The name of the table
+   * @param key    The record key of the record to write.
+   * @param values A HashMap of field/value pairs to update in the record
    * @return Zero on success, a non-zero error code on error
    */
   @Override
@@ -429,17 +439,14 @@ public class CassandraCQLClient extends DB {
    * values HashMap will be written into the record with the specified record
    * key.
    *
-   * @param table
-   *          The name of the table
-   * @param key
-   *          The record key of the record to insert.
-   * @param values
-   *          A HashMap of field/value pairs to insert in the record
+   * @param table  The name of the table
+   * @param key    The record key of the record to insert.
+   * @param values A HashMap of field/value pairs to insert in the record
    * @return Zero on success, a non-zero error code on error
    */
   @Override
   public Status insert(String table, String key,
-      Map<String, ByteIterator> values) {
+                       Map<String, ByteIterator> values) {
 
     try {
       Insert insertStmt = QueryBuilder.insertInto(table);
@@ -464,7 +471,7 @@ public class CassandraCQLClient extends DB {
       if (trace) {
         insertStmt.enableTracing();
       }
-      
+
       session.execute(insertStmt);
 
       return Status.OK;
@@ -478,10 +485,8 @@ public class CassandraCQLClient extends DB {
   /**
    * Delete a record from the database.
    *
-   * @param table
-   *          The name of the table
-   * @param key
-   *          The record key of the record to delete.
+   * @param table The name of the table
+   * @param key   The record key of the record to delete.
    * @return Zero on success, a non-zero error code on error
    */
   @Override
@@ -500,7 +505,7 @@ public class CassandraCQLClient extends DB {
       if (trace) {
         stmt.enableTracing();
       }
-      
+
       session.execute(stmt);
 
       return Status.OK;
