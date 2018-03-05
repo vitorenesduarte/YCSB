@@ -27,7 +27,9 @@ import com.yahoo.ycsb.StringByteIterator;
 import org.telecomsudparis.smap.MapCommand;
 import org.telecomsudparis.smap.ResultsCollection;
 import org.telecomsudparis.smap.SMapServiceClient;
+import org.telecomsudparis.smap.SMapClient;
 import org.telecomsudparis.smap.pb.*;
+import scala.util.Either;
 
 
 //import java.util.Collection;
@@ -56,43 +58,95 @@ public class MGBSMapYCSBClient extends DB {
 
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
-    if (verbose) {
-      System.out.println("READ: " + key + " -> " + result);
-    }
-    HashMap<String, String> defaultRow = new HashMap<>();
-    defaultRow.keySet().addAll(fields);
+    HashMap<String, String> fieldsMap = new HashMap<>();
+    fieldsMap.keySet().addAll(fields);
     //FIXME: Define callerId
-    Smap.Item readIt = Smap.Item.newBuilder().setKey(key).putAllFields(defaultRow).build();
+    Smap.Item readItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     Smap.MapCommand readCmd = Smap.MapCommand.newBuilder().
-            setItem(readIt).
+            setItem(readItem).
             setOperationType(Smap.MapCommand.OperationType.GET).
-            setOperationUuid(java.util.UUID.randomUUID().toString()).
+            setOperationUuid(SMapClient.uuid()).
             build();
-    //isRight?
-    ResultsCollection res = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(readCmd)).right().get();
-    Smap.ResultsCollection javaResult = ResultsCollection.toJavaProto(res);
 
-    StringByteIterator.putAllAsByteIterators(result,
-    javaResult.getResultsList().get(0).getFieldsMap());
+    //FIXME: This is equivalent to use .getOrElse(), so use it.
+    Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(readCmd));
+    if(eitherRes.isRight()){
+      ResultsCollection res = eitherRes.right().get();
+      Smap.ResultsCollection javaResult = ResultsCollection.toJavaProto(res);
+      StringByteIterator.putAllAsByteIterators(result, javaResult.getResultsList().get(0).getFieldsMap());
+      if (verbose) {
+        System.out.println("READ: " + key + " -> " + result);
+      }
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
 
-    return Status.OK;
   }
 
   @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
-    if (verbose) {
-      System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
+
+    HashMap<String, String> fieldsMap = new HashMap<>();
+    fieldsMap.keySet().addAll(fields);
+    //FIXME: Define callerId
+    Smap.Item scanItem = Smap.Item.newBuilder().setKey(startkey).putAllFields(fieldsMap).build();
+    Smap.MapCommand scanCmd = Smap.MapCommand.newBuilder().
+            setItem(scanItem).
+            setRecordcount(recordcount).
+            setStartKey(startkey).
+            setOperationType(Smap.MapCommand.OperationType.SCAN).
+            setOperationUuid(SMapClient.uuid()).
+            build();
+
+    //FIXME: This is equivalent to use .getOrElse(), so use it.
+    Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(scanCmd));
+    if(eitherRes.isRight()){
+      ResultsCollection res = eitherRes.right().get();
+      Smap.ResultsCollection javaResult = ResultsCollection.toJavaProto(res);
+
+      for (Smap.Item it : javaResult.getResultsList()) {
+        HashMap<String, ByteIterator> tempFieldsMap = new HashMap<>();
+        StringByteIterator.putAllAsByteIterators(tempFieldsMap, it.getFieldsMap());
+        result.add(tempFieldsMap);
+      }
+
+      if (verbose) {
+        System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
+      }
+      return Status.OK;
+    } else {
+      return Status.ERROR;
     }
-    return Status.OK;
+
   }
 
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
     if (verbose) {
-      System.out.println("UPDATE: " + key + " -> " + values);
+      System.out.println("READ: " + key + " -> " + values);
     }
-    return Status.OK;
+    HashMap<String, String> fieldsMap = new HashMap<>();
+    StringByteIterator.putAllAsStrings(fieldsMap, values);
+
+    //FIXME: Define callerId
+    Smap.Item updateItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
+    Smap.MapCommand updateCmd = Smap.MapCommand.newBuilder().
+            setItem(updateItem).
+            setOperationType(Smap.MapCommand.OperationType.UPDATE).
+            setOperationUuid(SMapClient.uuid()).
+            build();
+
+    //FIXME: This is equivalent to use .getOrElse(), so use it.
+    Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(updateCmd));
+    if(eitherRes.isRight()){
+      //ResultsCollection res = eitherRes.right().get();
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
+
   }
 
   /*
@@ -107,12 +161,49 @@ public class MGBSMapYCSBClient extends DB {
     if (verbose) {
       System.out.println("INSERT: " + key + " -> " + values);
     }
-    return Status.OK;
+    HashMap<String, String> fieldsMap = new HashMap<>();
+    StringByteIterator.putAllAsStrings(fieldsMap, values);
+
+    //FIXME: Define callerId
+    Smap.Item insertItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
+    Smap.MapCommand insertCmd = Smap.MapCommand.newBuilder().
+            setItem(insertItem).
+            setOperationType(Smap.MapCommand.OperationType.INSERT).
+            setOperationUuid(SMapClient.uuid()).
+            build();
+
+    //FIXME: This is equivalent to use .getOrElse(), so use it.
+    Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(insertCmd));
+    if(eitherRes.isRight()){
+      //ResultsCollection res = eitherRes.right().get();
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
+
   }
 
   @Override
   public Status delete(String table, String key) {
-    return Status.OK;
+    if (verbose) {
+      System.out.println("DELETE: " + key);
+    }
+    //FIXME: Define callerId
+    Smap.Item deleteItem = Smap.Item.newBuilder().setKey(key).build();
+    Smap.MapCommand deleteCmd = Smap.MapCommand.newBuilder().
+            setItem(deleteItem).
+            setOperationType(Smap.MapCommand.OperationType.DELETE).
+            setOperationUuid(SMapClient.uuid()).
+            build();
+
+    //FIXME: This is equivalent to use .getOrElse(), so use it.
+    Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(deleteCmd));
+    if (eitherRes.isRight()) {
+      //ResultsCollection res = eitherRes.right().get();
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
   }
 
 }
