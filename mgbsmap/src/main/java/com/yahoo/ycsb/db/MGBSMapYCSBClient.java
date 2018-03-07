@@ -23,16 +23,14 @@ import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.Status;
 import com.yahoo.ycsb.StringByteIterator;
 
-
 import org.telecomsudparis.smap.MapCommand;
 import org.telecomsudparis.smap.ResultsCollection;
 import org.telecomsudparis.smap.SMapServiceClient;
 import org.telecomsudparis.smap.SMapClient;
+import org.telecomsudparis.smap.ClientConfig;
 import org.telecomsudparis.smap.pb.*;
 import scala.util.Either;
 
-
-//import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -43,17 +41,24 @@ import java.util.Vector;
  */
 public class MGBSMapYCSBClient extends DB {
 
-  private static volatile boolean localReads = false;
-  private static volatile boolean verbose = false;
+  private static ClientConfig cfg;
   private SMapServiceClient ycsbSMapClientService;
+  private static volatile boolean verbose = false;
 
   public MGBSMapYCSBClient() {
 
   }
 
   public void init() throws DBException {
-    String host = getProperties().getProperty("host");
-    ycsbSMapClientService = new SMapServiceClient(host, 8980);
+    synchronized (MGBSMapYCSBClient.class) {
+      if(cfg == null) {
+        verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
+        String zhost = getProperties().getProperty("host");
+        String zport = getProperties().getProperty("port");
+        cfg = new ClientConfig(zhost, zport, "undefined", 8980);
+      }
+    }
+    ycsbSMapClientService = new SMapServiceClient(cfg);
   }
 
   @Override
@@ -149,12 +154,10 @@ public class MGBSMapYCSBClient extends DB {
 
   }
 
-  /*
   @Override
   public void cleanup() {
-    server1.serverClose();
+    ycsbSMapClientService.shutdown();
   }
-  */
 
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
