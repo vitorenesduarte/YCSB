@@ -34,7 +34,7 @@ RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding,com.yahoo.ycsb:mgbsmap-binding
 RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-binding -am clean package -DskipTests
 
 RUN tar zxvf /app/YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
-RUN tar zxvf /app/YCSB/vcdmap/target/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+RUN tar zxvf /app/YCSB/mgbsmap/target/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 RUN tar zxvf /app/YCSB/cassandra/target/ycsb-cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
