@@ -23,23 +23,23 @@ ADD https://api.github.com/repos/vitorenesduarte/VCD-java-client/git/refs/heads/
 RUN git clone -b zk https://github.com/vitorenesduarte/VCD-java-client
 RUN mvn -f VCD-java-client clean install -DskipTests
 
-ADD https://api.bitbucket.org/1.0/repositories/tfr/vcd-map vcd-map-version.json
-RUN git clone https://bitbucket.org/tfr/vcd-map
-RUN make -C vcd-map install
+ADD https://api.github.com/repos/tuanir/MGB-SMap/git/refs/heads/master mgb-smap-version.json
+RUN git clone https://github.com/tuanir/MGB-SMap.git
+RUN make -C MGB-SMap install
 
 ADD https://api.github.com/repos/otrack/YCSB/git/refs/heads/epaxos ycsb-version.json
 RUN git clone -b epaxos https://github.com/otrack/YCSB
-RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding,com.yahoo.ycsb:vcdmap-binding -am clean package -DskipTests
+RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding,com.yahoo.ycsb:mgbsmap-binding -am clean package -DskipTests
 
 RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-binding -am clean package -DskipTests
 
 RUN tar zxvf /app/YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
-RUN tar zxvf /app/YCSB/vcdmap/target/ycsb-vcdmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+RUN tar zxvf /app/YCSB/vcdmap/target/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 RUN tar zxvf /app/YCSB/cassandra/target/ycsb-cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
-RUN cp -Rf /app/ycsb-vcdmap-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
+RUN cp -Rf /app/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 
 ENV TYPE load
