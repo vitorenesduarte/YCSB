@@ -31,16 +31,16 @@ ADD https://api.github.com/repos/otrack/YCSB/git/refs/heads/epaxos ycsb-version.
 RUN git clone -b epaxos https://github.com/otrack/YCSB
 RUN mvn -f YCSB -pl com.yahoo.ycsb:epaxos-binding,com.yahoo.ycsb:mgbsmap-binding -am clean package -DskipTests
 
-RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-binding -am clean package -DskipTests
+#RUN mvn -f YCSB -pl com.yahoo.ycsb:cassandra-binding,com.yahoo.ycsb:cassandra-binding -am clean package -DskipTests
 
 RUN tar zxvf /app/YCSB/epaxos/target/ycsb-epaxos-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 RUN tar zxvf /app/YCSB/mgbsmap/target/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT.tar.gz -C /app
-RUN tar zxvf /app/YCSB/cassandra/target/ycsb-cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
+#RUN tar zxvf /app/YCSB/cassandra/target/ycsb-cassandra-binding-0.13.0-SNAPSHOT.tar.gz -C /app
 
 RUN mkdir /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-epaxos-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 RUN cp -Rf /app/ycsb-mgbsmap-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
-RUN cp -Rf /app/ycsb-cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
+#RUN cp -Rf /app/ycsb-cassandra-binding-0.13.0-SNAPSHOT/* /app/ycsb-binding-0.13.0-SNAPSHOT
 
 ENV TYPE load
 ENV DB epaxos
@@ -55,6 +55,7 @@ ENV PORT 7087
 ENV LEADERLESS false
 ENV FAST false
 ENV EXTRA ""
+ENV SMAPPORT 8980
 
 CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
@@ -65,4 +66,5 @@ CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -p port=${PORT} \
     -p leaderless=${LEADERLESS} \
     -p fast=${FAST} \
+    -p smapport=${SMAPPORT} \
     ${EXTRA}"]
