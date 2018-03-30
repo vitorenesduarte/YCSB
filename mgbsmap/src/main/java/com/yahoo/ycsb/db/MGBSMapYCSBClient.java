@@ -60,10 +60,9 @@ public class MGBSMapYCSBClient extends DB {
         verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
         String zhost = getProperties().getProperty("host");
         String zport = getProperties().getProperty("port");
-        Integer sport = Integer.valueOf(getProperties().getProperty("smapport"));
-        cfg = new ClientConfig(zhost, zport, "undefined", sport, "");
+        cfg = new ClientConfig(zhost, zport, "undefined", 8980, "");
         String mgbHost = SMapServiceClient.zkGetClosest(cfg);
-        cfg2 = new ClientConfig(zhost, zport, "undefined", sport, mgbHost);
+        cfg2 = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
       }
     }
     ycsbSMapClientService = new SMapServiceClient(cfg2);
