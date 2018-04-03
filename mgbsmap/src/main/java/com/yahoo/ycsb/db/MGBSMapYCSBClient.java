@@ -42,7 +42,6 @@ import java.util.Vector;
 public class MGBSMapYCSBClient extends DB {
 
   private static ClientConfig cfg;
-  private static ClientConfig cfg2;
   private SMapServiceClient ycsbSMapClientService;
   private static volatile boolean verbose = false;
 
@@ -60,12 +59,11 @@ public class MGBSMapYCSBClient extends DB {
         verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
         String zhost = getProperties().getProperty("host");
         String zport = getProperties().getProperty("port");
-        cfg = new ClientConfig(zhost, zport, "undefined", 8980, "");
-        String mgbHost = SMapServiceClient.zkGetClosest(cfg);
-        cfg2 = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
+        String mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
+        cfg = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
       }
     }
-    ycsbSMapClientService = new SMapServiceClient(cfg2);
+    ycsbSMapClientService = new SMapServiceClient(cfg);
   }
 
    /**
