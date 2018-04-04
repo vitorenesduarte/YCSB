@@ -5,6 +5,7 @@ MAINTAINER 0track
 WORKDIR /app
 RUN apt-get update && apt-get install -y \
     tar \
+    iputils-ping \
     git \
     golang \
     maven \
