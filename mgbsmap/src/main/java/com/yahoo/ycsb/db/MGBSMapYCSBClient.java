@@ -31,10 +31,8 @@ import org.telecomsudparis.smap.ClientConfig;
 import org.telecomsudparis.smap.pb.*;
 import scala.util.Either;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * This is a client implementation for MGB-SMap 0.1-SNAPSHOT.
@@ -44,6 +42,8 @@ public class MGBSMapYCSBClient extends DB {
   private static ClientConfig cfg;
   private SMapServiceClient ycsbSMapClientService;
   private static volatile boolean verbose = false;
+  private static Integer numIds = 10000;
+  private static ThreadLocal<List<String>> session = new ThreadLocal<List<String>>();
 
   public MGBSMapYCSBClient() {
 
@@ -63,6 +63,12 @@ public class MGBSMapYCSBClient extends DB {
         cfg = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
       }
     }
+
+    List<String> sessionIDS = new ArrayList<>();
+    for(Integer i = 0; i < numIds; i++) {
+      sessionIDS.add(java.util.UUID.randomUUID().toString());
+    }
+    session.set(sessionIDS);
     ycsbSMapClientService = new SMapServiceClient(cfg);
   }
 
@@ -81,17 +87,21 @@ public class MGBSMapYCSBClient extends DB {
     HashMap<String, String> fieldsMap = new HashMap<>();
     Smap.Item readItem;
 
-    //FIXME: Define callerId
     if(fields != null) {
       fieldsMap.keySet().addAll(fields);
       readItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     } else {
       readItem = Smap.Item.newBuilder().setKey(key).build();
     }
+
+    int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
+    String pickRandom = session.get().get(r);
+
     Smap.MapCommand readCmd = Smap.MapCommand.newBuilder().
             setItem(readItem).
             setOperationType(Smap.MapCommand.OperationType.GET).
             setOperationUuid(SMapClient.uuid()).
+            setCallerId(pickRandom).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -107,7 +117,6 @@ public class MGBSMapYCSBClient extends DB {
     } else {
       return Status.ERROR;
     }
-
   }
 
   /**
@@ -135,13 +144,16 @@ public class MGBSMapYCSBClient extends DB {
       scanItem = Smap.Item.newBuilder().setKey(startkey).build();
     }
 
-    //FIXME: Define callerId
+    int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
+    String pickRandom = session.get().get(r);
+
     Smap.MapCommand scanCmd = Smap.MapCommand.newBuilder().
             setItem(scanItem).
             setRecordcount(recordcount).
             setStartKey(startkey).
             setOperationType(Smap.MapCommand.OperationType.SCAN).
             setOperationUuid(SMapClient.uuid()).
+            setCallerId(pickRandom).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -179,17 +191,20 @@ public class MGBSMapYCSBClient extends DB {
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
     if (verbose) {
-      System.out.println("READ: " + key + " -> " + values);
+      System.out.println("UPDATE: " + key + " -> " + values);
     }
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
-    //FIXME: Define callerId
+    int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
+    String pickRandom = session.get().get(r);
+
     Smap.Item updateItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     Smap.MapCommand updateCmd = Smap.MapCommand.newBuilder().
             setItem(updateItem).
             setOperationType(Smap.MapCommand.OperationType.UPDATE).
             setOperationUuid(SMapClient.uuid()).
+            setCallerId(pickRandom).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -230,12 +245,15 @@ public class MGBSMapYCSBClient extends DB {
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
-    //FIXME: Define callerId
+    int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
+    String pickRandom = session.get().get(r);
+
     Smap.Item insertItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     Smap.MapCommand insertCmd = Smap.MapCommand.newBuilder().
             setItem(insertItem).
             setOperationType(Smap.MapCommand.OperationType.INSERT).
             setOperationUuid(SMapClient.uuid()).
+            setCallerId(pickRandom).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -261,12 +279,15 @@ public class MGBSMapYCSBClient extends DB {
     if (verbose) {
       System.out.println("DELETE: " + key);
     }
-    //FIXME: Define callerId
+    int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
+    String pickRandom = session.get().get(r);
+
     Smap.Item deleteItem = Smap.Item.newBuilder().setKey(key).build();
     Smap.MapCommand deleteCmd = Smap.MapCommand.newBuilder().
             setItem(deleteItem).
             setOperationType(Smap.MapCommand.OperationType.DELETE).
             setOperationUuid(SMapClient.uuid()).
+            setCallerId(pickRandom).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
