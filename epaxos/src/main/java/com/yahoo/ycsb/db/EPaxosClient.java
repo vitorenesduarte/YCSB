@@ -57,7 +57,6 @@ public class EPaxosClient extends DB {
   public void init() throws DBException {
     verbose = false;
     hasFailed = false;
-    epaxos = Bindings.NewParameters();
     executorService = Executors.newFixedThreadPool(1);
 
     boolean leaderless = false;
@@ -75,16 +74,24 @@ public class EPaxosClient extends DB {
     }
 
     if (!getProperties().containsKey("host") | !getProperties().containsKey("port")) {
-      epaxos.Connect("localhost", 7087, verbose, leaderless, fast);
+      epaxos = Bindings.NewParameters(
+          "localhost",
+          7087,
+          verbose,
+          leaderless,
+          fast,
+          true
+      );
     } else {
-      epaxos.Connect(
+      epaxos = Bindings.NewParameters(
           getProperties().getProperty("host"),
           Integer.parseInt(getProperties().getProperty("port")),
           verbose,
           leaderless,
-          fast);
-
+          fast,
+          true);
     }
+    epaxos.Connect();
   }
 
   @Override
