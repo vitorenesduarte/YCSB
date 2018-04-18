@@ -34,10 +34,7 @@ mvn clean package
   ```
 git clone https://github.com/tuanir/MGB-SMap.git
 cd MGB-SMap
-make compile
-make jars
-make poms
-make install
+make all
   ```
 
 1. Go to YCSB root directory and compile the MGB-SMap bindings:
