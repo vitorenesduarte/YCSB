@@ -39,11 +39,13 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class MGBSMapYCSBClient extends DB {
 
+  private static final int DEFAULT_NUMBER_SESSION_PER_THREAD = 10000;
+
   private static ClientConfig cfg;
+
   private SMapServiceClient ycsbSMapClientService;
-  private static volatile boolean verbose = false;
-  private static Integer numIds = 10000;
-  private static ThreadLocal<List<String>> session = new ThreadLocal<List<String>>();
+  private boolean verbose;
+  private static ThreadLocal<List<String>> session = new ThreadLocal<>();
 
   public MGBSMapYCSBClient() {
 
@@ -64,15 +66,30 @@ public class MGBSMapYCSBClient extends DB {
       }
     }
 
-    List<String> sessionIDS = new ArrayList<>();
-    for(Integer i = 0; i < numIds; i++) {
-      sessionIDS.add(java.util.UUID.randomUUID().toString());
+    int ns = (getProperties().getProperty("session") == null)
+        ? DEFAULT_NUMBER_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("session"));
+    List<String> sessions = new ArrayList<>();
+    for(Integer i = 0; i < ns; i++) {
+      sessions.add(java.util.UUID.randomUUID().toString());
     }
-    session.set(sessionIDS);
+    session.set(sessions);
+    if (verbose) {
+      System.out.println("using "+ns+" sessions ");
+    }
+
     ycsbSMapClientService = new SMapServiceClient(cfg);
   }
 
-   /**
+  /**
+   * Cleanup any state for this DB. Called once per DB instance; there is one DB
+   * instance per client thread.
+   */
+  @Override
+  public void cleanup() {
+    //ycsbSMapClientService.shutdown();
+  }
+
+  /**
    * Read a record from the database. Each field/value pair from the result will
    * be stored in a HashMap.
    *
@@ -111,7 +128,7 @@ public class MGBSMapYCSBClient extends DB {
       Smap.ResultsCollection javaResult = ResultsCollection.toJavaProto(res);
       StringByteIterator.putAllAsByteIterators(result, javaResult.getResultsList().get(0).getFieldsMap());
       if (verbose) {
-        System.out.println("READ: " + key + " -> " + result);
+        System.out.println("READ{"+session+"]: " + key + " -> " + result);
       }
       return Status.OK;
     } else {
@@ -169,8 +186,9 @@ public class MGBSMapYCSBClient extends DB {
       }
 
       if (verbose) {
-        System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
+        System.out.println("SCAN{"+session+"]: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
       }
+
       return Status.OK;
     } else {
       return Status.ERROR;
@@ -190,9 +208,6 @@ public class MGBSMapYCSBClient extends DB {
    */
   @Override
   public Status update(String table, String key, Map<String, ByteIterator> values) {
-    if (verbose) {
-      System.out.println("UPDATE: " + key + " -> " + values);
-    }
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
@@ -207,6 +222,10 @@ public class MGBSMapYCSBClient extends DB {
             setCallerId(pickRandom).
             build();
 
+    if (verbose) {
+      System.out.println("UPDATE{"+session+"]: " + key + " -> " + values);
+    }
+
     //FIXME: This is equivalent to use .getOrElse(), so use it.
     Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(updateCmd));
     if(eitherRes.isRight()){
@@ -216,15 +235,6 @@ public class MGBSMapYCSBClient extends DB {
       return Status.ERROR;
     }
 
-  }
-
-  /**
-   * Cleanup any state for this DB. Called once per DB instance; there is one DB
-   * instance per client thread.
-   */
-  @Override
-  public void cleanup() {
-    //ycsbSMapClientService.shutdown();
   }
 
   /**
@@ -239,9 +249,6 @@ public class MGBSMapYCSBClient extends DB {
    */
   @Override
   public Status insert(String table, String key, Map<String, ByteIterator> values) {
-    if (verbose) {
-      System.out.println("INSERT: " + key + " -> " + values);
-    }
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
@@ -255,6 +262,10 @@ public class MGBSMapYCSBClient extends DB {
             setOperationUuid(SMapClient.uuid()).
             setCallerId(pickRandom).
             build();
+
+    if (verbose) {
+      System.out.println("INSERT{"+session+"]: " + key + " -> " + values);
+    }
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
     Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(insertCmd));
@@ -276,9 +287,6 @@ public class MGBSMapYCSBClient extends DB {
    */
   @Override
   public Status delete(String table, String key) {
-    if (verbose) {
-      System.out.println("DELETE: " + key);
-    }
     int r = ThreadLocalRandom.current().nextInt(0, session.get().size()-1);
     String pickRandom = session.get().get(r);
 
@@ -289,6 +297,10 @@ public class MGBSMapYCSBClient extends DB {
             setOperationUuid(SMapClient.uuid()).
             setCallerId(pickRandom).
             build();
+
+    if (verbose) {
+      System.out.println("DELETE{"+session+"]: " + key);
+    }
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
     Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(deleteCmd));
