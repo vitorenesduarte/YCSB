@@ -39,12 +39,13 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class MGBSMapYCSBClient extends DB {
 
-  private static final int DEFAULT_NUMBER_SESSION_PER_THREAD = 10000;
+  private static final int DEFAULT_SESSION_PER_THREAD = 1000;
+  private static final int MAX_SESSION_PER_THREAD = 1000000;
 
-  private static ClientConfig cfg;
+  private ClientConfig cfg;
+  private boolean verbose;
 
   private SMapServiceClient ycsbSMapClientService;
-  private boolean verbose;
   private static ThreadLocal<List<String>> sessions = new ThreadLocal<>();
 
   public MGBSMapYCSBClient() {
@@ -56,25 +57,23 @@ public class MGBSMapYCSBClient extends DB {
    * DB instance per client thread.
    */
   public void init() throws DBException {
-    synchronized (MGBSMapYCSBClient.class) {
-      if(cfg == null) {
-        verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
-        String zhost = getProperties().getProperty("host");
-        String zport = getProperties().getProperty("port");
-        String mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
-        cfg = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
-      }
-    }
+    verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
+    String zhost = getProperties().getProperty("host");
+    String zport = getProperties().getProperty("port");
+    String mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
+    cfg = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
 
     int ns = (getProperties().getProperty("sessions") == null)
-        ? DEFAULT_NUMBER_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("sessions"));
+        ? DEFAULT_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("sessions"));
+    assert ns < MAX_SESSION_PER_THREAD;
     List<String> sessionList = new ArrayList<>();
-    for(Integer i = 0; i < ns; i++) {
-      sessionList.add(java.util.UUID.randomUUID().toString());
+    for(long i = Thread.currentThread().getId()*MAX_SESSION_PER_THREAD;
+        i < Thread.currentThread().getId()*MAX_SESSION_PER_THREAD+ns; i++) {
+      sessionList.add(Long.toString(i));
     }
     MGBSMapYCSBClient.sessions.set(sessionList);
     if (verbose) {
-      System.out.println("using "+ns+" sessions ");
+      System.out.println(Thread.currentThread().getId()+" using sessions: " + sessionList);
     }
 
     ycsbSMapClientService = new SMapServiceClient(cfg);
