@@ -41,6 +41,7 @@ public class MGBSMapYCSBClient extends DB {
 
   private static final int DEFAULT_SESSION_PER_THREAD = 1000;
   private static final int MAX_SESSION_PER_THREAD = 1000000;
+  private static final int DEFAULT_SERVER_PORT = 8980;
 
   private ClientConfig cfg;
   private boolean verbose;
@@ -61,7 +62,9 @@ public class MGBSMapYCSBClient extends DB {
     String zhost = getProperties().getProperty("host");
     String zport = getProperties().getProperty("port");
     String mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
-    cfg = new ClientConfig(zhost, zport, "undefined", 8980, mgbHost);
+    int sport = (getProperties().getProperty("sport") == null)
+        ? DEFAULT_SERVER_PORT : Integer.valueOf(getProperties().getProperty("sport"));
+    cfg = new ClientConfig(zhost, zport, "undefined", sport, mgbHost);
 
     int ns = (getProperties().getProperty("sessions") == null)
         ? DEFAULT_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("sessions"));
