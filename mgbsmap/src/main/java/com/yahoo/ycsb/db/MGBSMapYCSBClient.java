@@ -45,6 +45,7 @@ public class MGBSMapYCSBClient extends DB {
 
   private ClientConfig cfg;
   private boolean verbose;
+  private boolean staticConnection;
 
   private SMapServiceClient ycsbSMapClientService;
   private static ThreadLocal<List<String>> sessions = new ThreadLocal<>();
@@ -59,9 +60,15 @@ public class MGBSMapYCSBClient extends DB {
    */
   public void init() throws DBException {
     verbose = Boolean.valueOf(getProperties().getProperty("verbose"));
+    staticConnection = Boolean.valueOf(getProperties().getProperty("static"));
     String zhost = getProperties().getProperty("host");
     String zport = getProperties().getProperty("port");
-    String mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
+    String mgbHost;
+    if(!staticConnection){
+      mgbHost = SMapServiceClient.javaClientGetClosestNode(zhost, zport);
+    } else {
+      mgbHost = zhost;
+    }
     int sport = (getProperties().getProperty("sport") == null)
         ? DEFAULT_SERVER_PORT : Integer.valueOf(getProperties().getProperty("sport"));
     cfg = new ClientConfig(zhost, zport, "undefined", sport, mgbHost);

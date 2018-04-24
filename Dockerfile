@@ -1,4 +1,4 @@
-FROM openjdk:8-slim
+FROM openjdk
 
 MAINTAINER 0track
 
@@ -57,6 +57,7 @@ ENV LEADERLESS false
 ENV FAST false
 ENV EXTRA ""
 ENV SMAPPORT 8980
+ENV STATICSMAP 8980
 
 CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -P /app/ycsb-binding-0.13.0-SNAPSHOT/workloads/${WORKLOAD} \
@@ -64,6 +65,7 @@ CMD ["sh", "-c", "/app/ycsb-binding-0.13.0-SNAPSHOT/bin/ycsb ${TYPE} ${DB} \
     -p recordcount=${RECORDCOUNT} \
     -p operationcount=${OPERATIONCOUNT} \
     -p host=${HOST} \
+    -p static=${STATICSMAP} \
     -p port=${PORT} \
     -p leaderless=${LEADERLESS} \
     -p fast=${FAST} \
