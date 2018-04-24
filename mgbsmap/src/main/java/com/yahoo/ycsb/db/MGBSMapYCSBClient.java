@@ -69,8 +69,7 @@ public class MGBSMapYCSBClient extends DB {
     } else {
       mgbHost = zhost;
     }
-    int sport = (getProperties().getProperty("sport") == null)
-        ? DEFAULT_SERVER_PORT : Integer.valueOf(getProperties().getProperty("sport"));
+    int sport = Integer.valueOf(getProperties().getProperty("sport"));
     cfg = new ClientConfig(zhost, zport, "undefined", sport, mgbHost);
 
     int ns = (getProperties().getProperty("sessions") == null)
