@@ -91,7 +91,12 @@ public class EPaxosClient extends DB {
           fast,
           true);
     }
-    epaxos.Connect();
+    try {
+      epaxos.Connect();
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new DBException("cannot connect to DB");
+    }
   }
 
   @Override
@@ -165,7 +170,7 @@ public class EPaxosClient extends DB {
       HashMap<String, ByteIterator> item = new HashMap<>();
       final byte[][] data = new byte[1][1];
 
-      CompletableFuture.runAsync(() -> data[0] = epaxos.Scan(hash(startkey)),
+      CompletableFuture.runAsync(() -> data[0] = epaxos.Scan(hash(startkey), recordcount),
           executorService).get(TIMEOUT, TimeUnit.MILLISECONDS);
 
       if (data[0] != null) {
