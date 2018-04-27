@@ -112,13 +112,16 @@ public class MGBSMapYCSBClient extends DB {
     HashMap<String, String> fieldsMap = new HashMap<>();
     Smap.Item readItem;
 
+    /*
     if(fields != null) {
       fieldsMap.keySet().addAll(fields);
       readItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     } else {
       readItem = Smap.Item.newBuilder().setKey(key).build();
     }
+    */
 
+    readItem = Smap.Item.newBuilder().setKey(key).build();
     int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
     String session = sessions.get().get(r);
 
