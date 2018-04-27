@@ -69,8 +69,8 @@ public class MGBSMapYCSBClient extends DB {
     } else {
       mgbHost = zhost;
     }
-    int sport = Integer.valueOf(getProperties().getProperty("sport"));
-    cfg = new ClientConfig(zhost, zport, "undefined", sport, mgbHost);
+    int smapport = Integer.valueOf(getProperties().getProperty("smapport"));
+    cfg = new ClientConfig(zhost, zport, "undefined", smapport, mgbHost);
 
     int ns = (getProperties().getProperty("sessions") == null)
         ? DEFAULT_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("sessions"));
