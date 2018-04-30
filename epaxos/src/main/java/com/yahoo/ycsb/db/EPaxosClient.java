@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class EPaxosClient extends DB {
 
-  private static final int TIMEOUT = 10000; // in ms.
+  private static final int TIMEOUT = Integer.MAX_VALUE; // in ms.
 
   private ExecutorService executorService;
   private Bindings.Parameters epaxos;
