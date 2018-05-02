@@ -101,6 +101,7 @@ public class EPaxosClient extends DB {
 
   @Override
   public void cleanup() {
+    System.out.println(epaxos.Stats());
     epaxos.Disconnect();
   }
 
