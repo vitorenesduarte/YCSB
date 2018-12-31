@@ -69,7 +69,7 @@ public class EPaxosClient extends DB {
       fast = true;
     }
 
-    boolean verbose = false;
+    verbose = false;
     if ("true".equals(getProperties().getProperty("verbose"))) {
       verbose = true;
     }
