@@ -69,10 +69,16 @@ public class EPaxosClient extends DB {
       fast = true;
     }
 
+    boolean verbose = false;
     if ("true".equals(getProperties().getProperty("verbose"))) {
       verbose = true;
     }
 
+    boolean localreads = false;
+    if ("true".equals(getProperties().getProperty("localreads"))) {
+      localreads = true;
+    }
+    
     if (!getProperties().containsKey("host") | !getProperties().containsKey("port")) {
       epaxos = Bindings.NewParameters(
           "localhost",
@@ -80,7 +86,7 @@ public class EPaxosClient extends DB {
           verbose,
           leaderless,
           fast,
-          true
+          localreads
       );
     } else {
       epaxos = Bindings.NewParameters(
@@ -89,7 +95,7 @@ public class EPaxosClient extends DB {
           verbose,
           leaderless,
           fast,
-          true);
+          localreads);
     }
     try {
       epaxos.Connect();
