@@ -1,4 +1,4 @@
-FROM openjdk
+FROM openjdk:8u212-jdk-stretch
 
 MAINTAINER 0track
 
