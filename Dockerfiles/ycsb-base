@@ -1,0 +1,12 @@
+FROM openjdk:8u212-jdk-stretch
+
+MAINTAINER Vitor Enes <vitorenesduarte@gmail.com>
+
+WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    tar \
+    iputils-ping \
+    git \
+    golang \
+    maven \
+    build-essential
