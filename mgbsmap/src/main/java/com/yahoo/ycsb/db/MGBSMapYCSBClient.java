@@ -48,7 +48,6 @@ public class MGBSMapYCSBClient extends DB {
   private boolean staticConnection;
 
   private SMapServiceClient ycsbSMapClientService;
-  private static ThreadLocal<List<String>> sessions = new ThreadLocal<>();
 
   public MGBSMapYCSBClient() {
 
@@ -71,19 +70,6 @@ public class MGBSMapYCSBClient extends DB {
     }
     int smapport = Integer.valueOf(getProperties().getProperty("smapport"));
     cfg = new ClientConfig(zhost, zport, "undefined", smapport, mgbHost);
-
-    int ns = (getProperties().getProperty("sessions") == null)
-        ? DEFAULT_SESSION_PER_THREAD : Integer.valueOf(getProperties().getProperty("sessions"));
-    assert ns < MAX_SESSION_PER_THREAD;
-    List<String> sessionList = new ArrayList<>();
-    for(long i = Thread.currentThread().getId()*MAX_SESSION_PER_THREAD;
-        i < Thread.currentThread().getId()*MAX_SESSION_PER_THREAD+ns; i++) {
-      sessionList.add(Long.toString(i));
-    }
-    MGBSMapYCSBClient.sessions.set(sessionList);
-    if (verbose) {
-      System.out.println(Thread.currentThread().getId()+" using sessions: " + sessionList);
-    }
 
     ycsbSMapClientService = new SMapServiceClient(cfg);
   }
@@ -109,27 +95,12 @@ public class MGBSMapYCSBClient extends DB {
    */
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
-    HashMap<String, String> fieldsMap = new HashMap<>();
-    Smap.Item readItem;
-
-    /*
-    if(fields != null) {
-      fieldsMap.keySet().addAll(fields);
-      readItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
-    } else {
-      readItem = Smap.Item.newBuilder().setKey(key).build();
-    }
-    */
-
-    readItem = Smap.Item.newBuilder().setKey(key).build();
-    int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
-    String session = sessions.get().get(r);
+    Smap.Item readItem = Smap.Item.newBuilder().setKey(key).build();
 
     Smap.MapCommand readCmd = Smap.MapCommand.newBuilder().
             setItem(readItem).
             setOperationType(Smap.MapCommand.OperationType.GET).
             setOperationUuid(SMapClient.uuid()).
-            setCallerId(session).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -139,7 +110,7 @@ public class MGBSMapYCSBClient extends DB {
       Smap.ResultsCollection javaResult = ResultsCollection.toJavaProto(res);
       StringByteIterator.putAllAsByteIterators(result, javaResult.getResultsList().get(0).getFieldsMap());
       if (verbose) {
-        System.out.println("READ{"+ session +"]: " + key + " -> " + result);
+        System.out.println("READ " + key + " -> " + result);
       }
       return Status.OK;
     } else {
@@ -163,20 +134,7 @@ public class MGBSMapYCSBClient extends DB {
   public Status scan(String table, String startkey, int recordcount, Set<String> fields,
                      Vector<HashMap<String, ByteIterator>> result) {
 
-    HashMap<String, String> fieldsMap = new HashMap<>();
-    Smap.Item scanItem;
-    /*
-    if(fields != null) {
-      fieldsMap.keySet().addAll(fields);
-      scanItem = Smap.Item.newBuilder().setKey(startkey).putAllFields(fieldsMap).build();
-    } else {
-      scanItem = Smap.Item.newBuilder().setKey(startkey).build();
-    }
-    */
-
-    scanItem = Smap.Item.newBuilder().setKey(startkey).build();
-    int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
-    String session = sessions.get().get(r);
+    Smap.Item scanItem = Smap.Item.newBuilder().setKey(startkey).build();
 
     Smap.MapCommand scanCmd = Smap.MapCommand.newBuilder().
             setItem(scanItem).
@@ -184,7 +142,6 @@ public class MGBSMapYCSBClient extends DB {
             setStartKey(startkey).
             setOperationType(Smap.MapCommand.OperationType.SCAN).
             setOperationUuid(SMapClient.uuid()).
-            setCallerId(session).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
@@ -200,7 +157,7 @@ public class MGBSMapYCSBClient extends DB {
       }
 
       if (verbose) {
-        System.out.println("SCAN{"+ session +"]: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
+        System.out.println("SCAN: " + startkey + "[0-" + recordcount + "] -> " + result.toString());
       }
       return Status.OK;
     } else {
@@ -224,22 +181,18 @@ public class MGBSMapYCSBClient extends DB {
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
-    int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
-    String session = sessions.get().get(r);
-
     Smap.Item updateItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     Smap.MapCommand updateCmd = Smap.MapCommand.newBuilder().
             setItem(updateItem).
             setOperationType(Smap.MapCommand.OperationType.UPDATE).
             setOperationUuid(SMapClient.uuid()).
-            setCallerId(session).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
     Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(updateCmd));
     if(eitherRes.isRight()){
       if (verbose) {
-        System.out.println("UPDATE{"+ session +"]: " + key + " -> " + values);
+        System.out.println("UPDATE: " + key + " -> " + values);
       }
       return Status.OK;
     } else {
@@ -263,22 +216,18 @@ public class MGBSMapYCSBClient extends DB {
     HashMap<String, String> fieldsMap = new HashMap<>();
     StringByteIterator.putAllAsStrings(fieldsMap, values);
 
-    int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
-    String session = sessions.get().get(r);
-
     Smap.Item insertItem = Smap.Item.newBuilder().setKey(key).putAllFields(fieldsMap).build();
     Smap.MapCommand insertCmd = Smap.MapCommand.newBuilder().
             setItem(insertItem).
             setOperationType(Smap.MapCommand.OperationType.INSERT).
             setOperationUuid(SMapClient.uuid()).
-            setCallerId(session).
             build();
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
     Either<Exception, ResultsCollection> eitherRes = ycsbSMapClientService.sendCmd(MapCommand.fromJavaProto(insertCmd));
     if(eitherRes.isRight()){
       if (verbose) {
-        System.out.println("INSERT{"+ session +"]: " + key + " -> " + values);
+        System.out.println("INSERT: " + key + " -> " + values);
       }
       return Status.OK;
     } else {
@@ -296,19 +245,15 @@ public class MGBSMapYCSBClient extends DB {
    */
   @Override
   public Status delete(String table, String key) {
-    int r = ThreadLocalRandom.current().nextInt(0, sessions.get().size());
-    String session = sessions.get().get(r);
-
     Smap.Item deleteItem = Smap.Item.newBuilder().setKey(key).build();
     Smap.MapCommand deleteCmd = Smap.MapCommand.newBuilder().
             setItem(deleteItem).
             setOperationType(Smap.MapCommand.OperationType.DELETE).
             setOperationUuid(SMapClient.uuid()).
-            setCallerId(session).
             build();
 
     if (verbose) {
-      System.out.println("DELETE{"+ session +"]: " + key);
+      System.out.println("DELETE: " + key);
     }
 
     //FIXME: This is equivalent to use .getOrElse(), so use it.
