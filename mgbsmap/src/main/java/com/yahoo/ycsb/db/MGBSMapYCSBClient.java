@@ -32,7 +32,6 @@ import org.telecomsudparis.smap.pb.*;
 import scala.util.Either;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * This is a client implementation for MGB-SMap 0.1-SNAPSHOT.
