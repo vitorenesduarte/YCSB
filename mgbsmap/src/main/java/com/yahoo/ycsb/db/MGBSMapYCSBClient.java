@@ -38,10 +38,6 @@ import java.util.*;
  */
 public class MGBSMapYCSBClient extends DB {
 
-  private static final int DEFAULT_SESSION_PER_THREAD = 1000;
-  private static final int MAX_SESSION_PER_THREAD = 1000000;
-  private static final int DEFAULT_SERVER_PORT = 8980;
-
   private ClientConfig cfg;
   private boolean verbose;
   private boolean staticConnection;
